@@ -21,7 +21,7 @@ func main() {
 	// to store seeds
 	seeds := []int{}
 	// to store maps
-	mapList := []map[int]int{}
+	mapList := [][][]int{}
 	mapFlag := false
 
 	for fileScanner.Scan() {
@@ -44,11 +44,11 @@ func main() {
 				// first line in new map
 			} else if mapFlag == false {
 				mapFlag = true
-				mapList = append(mapList, map[int]int{})
+				mapList = append(mapList, [][]int{})
 			}
 
 			if mapFlag {
-				addLineValuesToMap(line, mapList[len(mapList)-1])
+				mapList[len(mapList)-1] = addLineValuesToMap(line, mapList[len(mapList)-1])
 			}
 		}
 	}
@@ -57,7 +57,7 @@ func main() {
 	readFile.Close()
 }
 
-func addLineValuesToMap(line string, valueMap map[int]int) {
+func addLineValuesToMap(line string, valueMap [][]int) [][]int {
 	// convert values to integers
 	numStrings := strings.Split(line, " ")
 	nums := []int{}
@@ -65,28 +65,23 @@ func addLineValuesToMap(line string, valueMap map[int]int) {
 		num, _ := strconv.Atoi(numString)
 		nums = append(nums, num)
 	}
-	// add values to map
-	for idx := 0; idx < nums[2]; idx++ {
-		valueMap[nums[1]+idx] = nums[0] + idx
-	}
+	valueMap = append(valueMap, nums)
+	return valueMap
 }
 
-func solveLowestLocation(seeds []int, mapList []map[int]int) int {
+func solveLowestLocation(seeds []int, mapList [][][]int) int {
 	locations := []int{}
 	for _, currentVal := range seeds {
 		for _, currentMap := range mapList {
-			currentVal = getWithDefaultValue(currentMap, currentVal)
+			for _, subMap := range currentMap {
+				if subMap[1] <= currentVal && currentVal < subMap[1]+subMap[2] {
+					currentVal = subMap[0] + currentVal - subMap[1]
+					break
+				}
+			}
+
 		}
 		locations = append(locations, currentVal)
 	}
 	return slices.Min(locations)
-}
-
-// returns value if key in map, returns key if key not in map
-func getWithDefaultValue(currentMap map[int]int, key int) int {
-	val, ok := currentMap[key]
-	if !ok {
-		return key
-	}
-	return val
 }

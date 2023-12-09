@@ -9,7 +9,7 @@ import (
 
 func main() {
 	fmt.Println(solveWasteland("input.txt"))
-	fmt.Println(solveGhostPuzzle("ghost-test-input.txt"))
+	fmt.Println(solveGhostPuzzle("input.txt"))
 }
 
 type node struct {
@@ -75,20 +75,40 @@ func solveGhostPuzzle(input string) int {
 			presentLocations = append(presentLocations, *v)
 		}
 	}
-	fmt.Println(presentLocations)
 
-	for !allEndsInZ(presentLocations) {
+	cycles := []int{}
+
+	for len(presentLocations) > 0 {
 		nextDirection := directions[moveCount%len(directions)]
 		if nextDirection == 'R' {
 			presentLocations = updateAllRight(presentLocations)
 		} else {
 			presentLocations = updateAllLeft(presentLocations)
 		}
-		fmt.Println(presentLocations)
 		moveCount += 1
+		newLocations := []node{}
+		for _, location := range presentLocations {
+			if location.value[len(location.value)-1] == 'Z' {
+				cycles = append(cycles, moveCount)
+				continue
+			}
+			newLocations = append(newLocations, location)
+		}
+		presentLocations = newLocations
 	}
 
-	return moveCount
+	result := cycles[0]
+	for _, cycle := range cycles[1:] {
+		a := result
+		b := cycle
+		for b != 0 {
+			t := b
+			b = a % b
+			a = t
+		}
+		result = result * cycle / a
+	}
+	return result
 }
 
 func updateAllLeft(presentLocations []node) []node {
@@ -105,15 +125,6 @@ func updateAllRight(presentLocations []node) []node {
 		newLocations = append(newLocations, *location.rightNode)
 	}
 	return newLocations
-}
-
-func allEndsInZ(presentLocations []node) bool {
-	for _, location := range presentLocations {
-		if location.value[len(location.value)-1] != 'Z' {
-			return false
-		}
-	}
-	return true
 }
 
 // adds node to map if not already present, returns node
